@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/rosterOSdataplatform/static/css/main.e6c13ad2.css",
-    "main.js": "/rosterOSdataplatform/static/js/main.63c80b9b.js",
+    "main.js": "/rosterOSdataplatform/static/js/main.e52b2851.js",
     "static/js/453.b916bef0.chunk.js": "/rosterOSdataplatform/static/js/453.b916bef0.chunk.js",
     "index.html": "/rosterOSdataplatform/index.html",
     "main.e6c13ad2.css.map": "/rosterOSdataplatform/static/css/main.e6c13ad2.css.map",
-    "main.63c80b9b.js.map": "/rosterOSdataplatform/static/js/main.63c80b9b.js.map",
+    "main.e52b2851.js.map": "/rosterOSdataplatform/static/js/main.e52b2851.js.map",
     "453.b916bef0.chunk.js.map": "/rosterOSdataplatform/static/js/453.b916bef0.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.63c80b9b.js"
+    "static/js/main.e52b2851.js"
   ]
 }
