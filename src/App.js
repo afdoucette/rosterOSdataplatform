@@ -878,7 +878,7 @@ export default function App() {
 
   useEffect(() => {
     setAdpLoading(true);
-    fetch("/ud_adp.json")
+    fetch("/rosterOSdataplatform/ud_adp.json")
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch ADP data");
         return res.json();
