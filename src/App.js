@@ -876,27 +876,22 @@ export default function App() {
   const comboRowsPerPage = 15;
   const [exposureThreshold, setExposureThreshold] = useState(15);
 
-  useEffect(() => {
-    setAdpLoading(true);
-<<<<<<< HEAD
-    fetch(process.env.PUBLIC_URL + "/ud_adp.json")
-      .then(res => {
-=======
-fetch(process.env.PUBLIC_URL + "/ud_adp.json")      .then(res => {
->>>>>>> 670013d410bc5d1e8463d31b0612d7c1c8b8fe46
-        if (!res.ok) throw new Error("Failed to fetch ADP data");
-        return res.json();
-      })
-      .then(data => {
-        setAdpData(data);
-        setAdpError("");
-      })
-      .catch(() => {
-        setAdpError("Could not load Underdog ADP data.");
-        setAdpData([]);
-      })
-      .finally(() => setAdpLoading(false));
-  }, []);
+ useEffect(() => {
+  setAdpLoading(true);
+  fetch(process.env.PUBLIC_URL + "/ud_adp.json")
+    .then(res => {
+      if (!res.ok) throw new Error("Failed to fetch ADP data");
+      return res.json();
+    })
+    .then(data => {
+      setAdpData(data);
+      setAdpError("");
+    })
+    .catch(() => {
+      setAdpError("Could not load Underdog ADP data.");
+      setAdpData([]);
+    });
+}, []);
   const udAdpLookup = useMemo(() => {
     const map = new Map();
     adpData.forEach(row => {
