@@ -1490,31 +1490,37 @@ export default function App() {
             </Box>
             <Divider sx={{ my: 4 }} />
             {/* Portfolio Recommendation Section: TABLE */}
-         <Box sx={{ display: "flex", alignItems: "center", my: 2, gap: 2 }}>
-  <Typography variant="h6" fontWeight={600} sx={{ whiteSpace: "nowrap" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 2 }}>
+  <Typography variant="h6" fontWeight={600}>
     Portfolio Recommendation: 2-Player Combos Over
   </Typography>
-  <Slider
-    sx={{ flexGrow: 1, mx: 3 }}
-    value={exposureThreshold >= 50 ? 52 : exposureThreshold}
-    onChange={(e, val) => setExposureThreshold(val === 52 ? 50 : val)}
-    step={2}
-    min={10}
-    max={52}
-    marks={[
-      ...Array.from({ length: 21 }, (_, i) => {
-        const val = 10 + i * 2;
-        if (val <= 50) return { value: val, label: `${val}%` };
-        return null;
-      }).filter(Boolean),
-      { value: 52, label: "50%+" }
-    ]}
-    valueLabelDisplay="auto"
-    getAriaValueText={v => (v === 52 ? "50%+" : `${v}%`)}
-  />
-  <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55 }}>
+  <Button
+    variant="outlined"
+    size="large"
+    onClick={() => {
+      const allowed = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+      const currentIndex = allowed.indexOf(exposureThreshold);
+      if (currentIndex > 0) setExposureThreshold(allowed[currentIndex - 1]);
+    }}
+    disabled={exposureThreshold === 10}
+  >
+    -
+  </Button>
+  <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55, textAlign: "center" }}>
     {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
   </Typography>
+  <Button
+    variant="outlined"
+    size="large"
+    onClick={() => {
+      const allowed = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+      const currentIndex = allowed.indexOf(exposureThreshold);
+      if (currentIndex < allowed.length - 1) setExposureThreshold(allowed[currentIndex + 1]);
+    }}
+    disabled={exposureThreshold >= 50}
+  >
+    +
+  </Button>
 </Box>
           </Paper>
         )}
