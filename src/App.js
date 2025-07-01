@@ -32,7 +32,6 @@ import {
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Slider } from "@mui/material";
 import { Box, Typography, Slider } from "@mui/material";
 import {
   BarChart,
