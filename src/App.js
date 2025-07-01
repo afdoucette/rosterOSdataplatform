@@ -1,5 +1,3 @@
-// FULLY EXPANDED, NO OMISSIONS, FULL-FEATURED App.js WITH PORTFOLIO TABLE (Table/Charts/My Combos tabs, all helpers, all UI, all state, all pagination)
-
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Papa from "papaparse";
 import {
@@ -29,7 +27,6 @@ import {
   Autocomplete,
   Chip,
   Collapse,
-  Slider, // <-- Add Slider here
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -83,6 +80,7 @@ const columns = [
   { id: "clv", label: "CLV", numeric: true, width: 75 },
   { id: "clvPct", label: "CLV %", numeric: true, width: 75 },
 ];
+const ALLOWED_EXPOSURE_VALUES = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
 function validateHeaders(row) {
   const uploadedHeaders = Object.keys(row || {});
   return csvHeaders.filter(h => !uploadedHeaders.includes(h));
@@ -877,22 +875,22 @@ export default function App() {
   const comboRowsPerPage = 15;
   const [exposureThreshold, setExposureThreshold] = useState(15);
 
- useEffect(() => {
-  setAdpLoading(true);
-  fetch(process.env.PUBLIC_URL + "/ud_adp.json")
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to fetch ADP data");
-      return res.json();
-    })
-    .then(data => {
-      setAdpData(data);
-      setAdpError("");
-    })
-    .catch(() => {
-      setAdpError("Could not load Underdog ADP data.");
-      setAdpData([]);
-    });
-}, []);
+  useEffect(() => {
+    setAdpLoading(true);
+    fetch(process.env.PUBLIC_URL + "/ud_adp.json")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch ADP data");
+        return res.json();
+      })
+      .then(data => {
+        setAdpData(data);
+        setAdpError("");
+      })
+      .catch(() => {
+        setAdpError("Could not load Underdog ADP data.");
+        setAdpData([]);
+      });
+  }, []);
   const udAdpLookup = useMemo(() => {
     const map = new Map();
     adpData.forEach(row => {
@@ -1490,38 +1488,37 @@ export default function App() {
             </Box>
             <Divider sx={{ my: 4 }} />
             {/* Portfolio Recommendation Section: TABLE */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 2 }}>
-  <Typography variant="h6" fontWeight={600}>
-    Portfolio Recommendation: 2-Player Combos Over
-  </Typography>
-  <Button
-    variant="outlined"
-    size="large"
-    onClick={() => {
-      const allowed = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
-      const currentIndex = allowed.indexOf(exposureThreshold);
-      if (currentIndex > 0) setExposureThreshold(allowed[currentIndex - 1]);
-    }}
-    disabled={exposureThreshold === 10}
-  >
-    -
-  </Button>
-  <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55, textAlign: "center" }}>
-    {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
-  </Typography>
-  <Button
-    variant="outlined"
-    size="large"
-    onClick={() => {
-      const allowed = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
-      const currentIndex = allowed.indexOf(exposureThreshold);
-      if (currentIndex < allowed.length - 1) setExposureThreshold(allowed[currentIndex + 1]);
-    }}
-    disabled={exposureThreshold >= 50}
-  >
-    +
-  </Button>
-</Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 2 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Portfolio Recommendation: 2-Player Combos Over
+              </Typography>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => {
+                  const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
+                  if (currentIndex > 0) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex - 1]);
+                }}
+                disabled={exposureThreshold === ALLOWED_EXPOSURE_VALUES[0]}
+              >
+                -
+              </Button>
+              <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55, textAlign: "center" }}>
+                {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => {
+                  const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
+                  if (currentIndex < ALLOWED_EXPOSURE_VALUES.length - 1) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex + 1]);
+                }}
+                disabled={exposureThreshold >= ALLOWED_EXPOSURE_VALUES[ALLOWED_EXPOSURE_VALUES.length - 1]}
+              >
+                +
+              </Button>
+            </Box>
+            <PortfolioPairsTable pairs={portfolioPairs} TEAM_COLORS={TEAM_COLORS} />
           </Paper>
         )}
         <Paper elevation={1} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, mt: 4 }}>
