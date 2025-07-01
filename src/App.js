@@ -29,10 +29,10 @@ import {
   Autocomplete,
   Chip,
   Collapse,
+  Slider, // <-- Add Slider here
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box, Typography, Slider } from "@mui/material";
 import {
   BarChart,
   Bar,
