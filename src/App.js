@@ -239,7 +239,7 @@ function getPlayerCombos(player, allPlayers, comboSize = 2, topN = 5) {
     .slice(0, topN);
   return sortedCombos;
 }
-function getPortfolioRecommendationPairs(players, rawData, exposureThreshold = 15) {
+function getPortfolioRecommendationPairs(players, rawData, exposureThreshold = 16) {
   const totalDrafts = new Set(rawData.map(row => row["Draft"])).size;
   const playerObjs = players.map(player => {
     const playerDrafts = new Set(player.rows.map(row => row["Draft"])).size;
