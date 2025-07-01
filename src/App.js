@@ -873,7 +873,7 @@ export default function App() {
   const [comboPlayerInputs, setComboPlayerInputs] = useState([]);
   const [comboPage, setComboPage] = useState(1);
   const comboRowsPerPage = 15;
-  const [exposureThreshold, setExposureThreshold] = useState(15);
+  const [exposureThreshold, setExposureThreshold] = useState(16);
 
   useEffect(() => {
     setAdpLoading(true);
