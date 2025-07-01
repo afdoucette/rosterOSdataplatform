@@ -32,6 +32,7 @@ import {
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Slider } from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -1491,20 +1492,28 @@ export default function App() {
             {/* Portfolio Recommendation Section: TABLE */}
             <Box>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                Portfolio Recommendation: 2-Player Combos Over&nbsp;
-                <TextField
-                  value={exposureThreshold}
-                  onChange={e => {
-                    const val = Number(e.target.value);
-                    setExposureThreshold(val >= 0 ? val : 0);
-                  }}
-                  type="number"
-                  size="small"
-                  sx={{ width: 70, mx: 1 }}
-                  inputProps={{ min: 0, max: 100, step: 1 }}
-                />
-                % Exposure Never Drafted Together
-              </Typography>
+  Portfolio Recommendation: 2-Player Combos Over&nbsp;
+  <Box sx={{ width: 250, display: "inline-block", mx: 2, verticalAlign: "middle" }}>
+    <Slider
+      value={exposureThreshold >= 50 ? 52 : exposureThreshold}
+      onChange={(e, val) => setExposureThreshold(val === 52 ? 50 : val)}
+      step={2}
+      min={10}
+      max={52}
+      marks={[
+        ...Array.from({ length: 21 }, (_, i) => {
+          const val = 10 + i * 2;
+          if (val <= 50) return { value: val, label: `${val}%` };
+          return null;
+        }).filter(Boolean),
+        { value: 52, label: "50%+" }
+      ]}
+      valueLabelDisplay="auto"
+      getAriaValueText={v => (v === 52 ? "50%+" : `${v}%`)}
+    />
+  </Box>
+  {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
+</Typography>
               <PortfolioPairsTable pairs={portfolioPairs} TEAM_COLORS={TEAM_COLORS} />
             </Box>
           </Paper>
