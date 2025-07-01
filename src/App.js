@@ -38,6 +38,8 @@ import {
   Line,
   Legend,
   Cell,
+  Scatter,
+  ScatterChart,
 } from "recharts";
 
 // ---------- CONSTANTS & HELPERS ----------
@@ -585,8 +587,14 @@ function PlayerRow({
   isOpen,
   onClick,
   TEAM_COLORS,
+  POSITION_COLORS,
   allPlayers
 }) {
+  // For combo lists
+  const top2Combos = getPlayerCombos(player, allPlayers, 2, 5);
+  const top3Combos = getPlayerCombos(player, allPlayers, 3, 5);
+  const pickChartData = getPlayerPickChartData(player);
+
   return (
     <>
       <TableRow hover sx={{ cursor: "pointer" }} onClick={onClick}>
@@ -595,18 +603,38 @@ function PlayerRow({
         </TableCell>
         <TableCell>{player.name}</TableCell>
         <TableCell>
+          {/* Team: colored dot and abbreviation */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span
+              style={{
+                display: "inline-block",
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                background: TEAM_COLORS[player.team] || "#eee",
+                marginRight: 6,
+                border: "1px solid #ccc",
+              }}
+            />
+            <Typography variant="body2" fontWeight={700} sx={{ color: "#222" }}>
+              {player.team}
+            </Typography>
+          </Box>
+        </TableCell>
+        <TableCell>
+          {/* Position: colored chip */}
           <Chip
-            label={player.team}
+            label={player.position}
             size="small"
             sx={{
-              bgcolor: TEAM_COLORS[player.team] || "#eee",
+              bgcolor: POSITION_COLORS[player.position] || "#eee",
               color: "#fff",
-              fontWeight: 600,
-              fontSize: "0.95em"
+              fontWeight: 700,
+              fontSize: "0.95em",
+              borderRadius: "16px"
             }}
           />
         </TableCell>
-        <TableCell>{player.position}</TableCell>
         <TableCell>{exposure}</TableCell>
         <TableCell>{count}</TableCell>
         <TableCell>{myAdp}</TableCell>
@@ -616,32 +644,106 @@ function PlayerRow({
       </TableRow>
       {isOpen && (
         <TableRow>
-          <TableCell colSpan={columns.length + 1} sx={{ bgcolor: "#fafbfc", p: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Drafted in these months:</Typography>
-            <Box sx={{ mb: 1 }}>
-              {Object.entries(player.accordionStats.monthCounts).map(([month, count]) => (
-                <Chip key={month} label={`${month}: ${count}`} sx={{ mr: 1, mb: 1 }} />
-              ))}
+          <TableCell colSpan={columns.length + 1} sx={{ bgcolor: "#fafbfc", p: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4, alignItems: "flex-start" }}>
+              {/* Pick Number Over Time Chart */}
+              <Box sx={{ flex: 1, minWidth: 260 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                  Pick Number Over Time
+                </Typography>
+                {pickChartData.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">No pick data</Typography>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={pickChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="dateStr"
+                        minTickGap={24}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        domain={['dataMin', 'dataMax']}
+                        reversed
+                        label={{ value: "Pick #", angle: -90, position: "insideLeft", fontSize: 12 }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip />
+                      <Line
+                        type="monotone"
+                        dataKey="pick"
+                        stroke={POSITION_COLORS[player.position] || "#888"}
+                        dot={{ stroke: POSITION_COLORS[player.position] || "#888", fill: "#fff", r: 5, strokeWidth: 2 }}
+                        strokeWidth={3}
+                        activeDot={{ r: 7 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </Box>
+              {/* Top 2-Player Combos */}
+              <Box sx={{ flex: 1, minWidth: 220 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                  Top 2-Player Combos
+                </Typography>
+                {top2Combos.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">No combos.</Typography>
+                ) : (
+                  top2Combos.map((combo, idx) => (
+                    <Box key={idx} sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                      {combo.players.map((p, i) => (
+                        <Chip
+                          key={p.name + p.team + p.position}
+                          label={`${p.name} (${p.team} ${p.position})`}
+                          size="small"
+                          sx={{
+                            bgcolor: TEAM_COLORS[p.team] || "#888",
+                            color: "#fff",
+                            fontWeight: 700,
+                            mr: i < combo.players.length - 1 ? 1 : 0,
+                            mb: 0.5
+                          }}
+                        />
+                      ))}
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        Drafted together {combo.count} {combo.count === 1 ? "time" : "times"}
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
+              {/* Top 3-Player Combos */}
+              <Box sx={{ flex: 1, minWidth: 220 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
+                  Top 3-Player Combos
+                </Typography>
+                {top3Combos.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">No combos.</Typography>
+                ) : (
+                  top3Combos.map((combo, idx) => (
+                    <Box key={idx} sx={{ display: "flex", alignItems: "center", mb: 1, flexWrap: "wrap" }}>
+                      {combo.players.map((p, i) => (
+                        <Chip
+                          key={p.name + p.team + p.position}
+                          label={`${p.name} (${p.team} ${p.position})`}
+                          size="small"
+                          sx={{
+                            bgcolor: TEAM_COLORS[p.team] || "#888",
+                            color: "#fff",
+                            fontWeight: 700,
+                            mr: i < combo.players.length - 1 ? 1 : 0,
+                            mb: 0.5
+                          }}
+                        />
+                      ))}
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        Drafted together {combo.count} {combo.count === 1 ? "time" : "times"}
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
             </Box>
-            <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>Tournament Exposure:</Typography>
-            <Box sx={{ mb: 1 }}>
-              {Object.entries(player.accordionStats.tournamentCounts).map(([tourney, count]) => (
-                <Chip key={tourney} label={`${tourney}: ${count}`} sx={{ mr: 1, mb: 1 }} />
-              ))}
-            </Box>
-            <Typography variant="subtitle2" sx={{ mt: 1 }}>
-              Total Tournament Entry Fee: ${player.accordionStats.totalTournamentEntryFee.toFixed(2)}
-            </Typography>
-            <Typography variant="subtitle2" sx={{ mt: 2 }}>Top Combos:</Typography>
-            <ul>
-              {getPlayerCombos(player, allPlayers).map((combo, idx) => (
-                <li key={idx}>
-                  {combo.players.map(
-                    p => `${p.name} (${p.team} ${p.position})`
-                  ).join(", ")} [{combo.count} teams]
-                </li>
-              ))}
-            </ul>
           </TableCell>
         </TableRow>
       )}
@@ -677,7 +779,7 @@ export default function App() {
   const [exposureThreshold, setExposureThreshold] = useState(16);
 
   // Sidebar/page navigation
-  const [sidebarPage, setSidebarPage] = useState("my-player");
+  const [sidebarPage, setSidebarPage] = useState("my-players");
   // Multi-select Tournament filter, Team and Position filters
   const [tournamentFilter, setTournamentFilter] = useState([]);
   const [teamFilter, setTeamFilter] = useState("");
@@ -685,12 +787,11 @@ export default function App() {
 
   // Refs for sidebar anchor/scroll
   const sectionRefs = {
-    "positional-percent-by-round": useRef(null),
-    "unique-players-by-team": useRef(null),
-    "team-position-breakdown": useRef(null),
+    "charts-positional-percent": useRef(null),
+    "charts-unique-players-by-team": useRef(null),
+    "charts-team-position-breakdown": useRef(null),
     "my-draft-teams": useRef(null),
     "portfolio-recommendations": useRef(null),
-    "charts-positional-percent": useRef(null),
   };
 
   // Tournament/Team/Position options
@@ -708,8 +809,8 @@ export default function App() {
   const filteredRawData = useMemo(() => {
     return rawData.filter(row => {
       if (tournamentFilter.length > 0 && !tournamentFilter.includes(row["Tournament Title"])) return false;
-      if (sidebarPage === "my-player" && teamFilter && row["Team"] !== teamFilter) return false;
-      if (sidebarPage === "my-player" && positionFilter && row["Position"] !== positionFilter) return false;
+      if (sidebarPage === "my-players" && teamFilter && row["Team"] !== teamFilter) return false;
+      if (sidebarPage === "my-players" && positionFilter && row["Position"] !== positionFilter) return false;
       return true;
     });
   }, [rawData, tournamentFilter, teamFilter, positionFilter, sidebarPage]);
@@ -736,13 +837,9 @@ export default function App() {
   // Sidebar navigation structure
   const sidebarNav = [
     {
-      label: "My Player",
-      value: "my-player",
-      children: [
-        { anchor: "positional-percent-by-round", label: "Positional % by Round" },
-        { anchor: "unique-players-by-team", label: "Unique Players by Team" },
-        { anchor: "team-position-breakdown", label: "Team/Position Breakdown" },
-      ],
+      label: "My Players",
+      value: "my-players",
+      children: [],
     },
     {
       label: "My Teams",
@@ -761,7 +858,9 @@ export default function App() {
       label: "Charts",
       value: "charts",
       children: [
-        { anchor: "charts-positional-percent", label: "Positional % by Round" }
+        { anchor: "charts-positional-percent", label: "Positional % by Round" },
+        { anchor: "charts-unique-players-by-team", label: "Unique Players Drafted by Team" },
+        { anchor: "charts-team-position-breakdown", label: "Team/Position Breakdown" }
       ],
     },
   ];
@@ -1005,11 +1104,12 @@ export default function App() {
           </MUIList>
         </Box>
       </Drawer>
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1, p: 0, pt: 3, minHeight: "100vh" }}>
+      {/* Main Content - unified container */}
+      <Box sx={{ flexGrow: 1, p: { xs: 1, md: 3 }, pt: 3, minHeight: "100vh" }}>
         <Container maxWidth="xl" sx={{ mt: 3 }}>
-          {/* CSV Upload and Tournament Filter (all pages) */}
-          <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, mb: 3, borderRadius: 3 }}>
+          {/* Unified Paper */}
+          <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, mb: 4 }}>
+            {/* CSV Upload and Tournament Filter (all pages) */}
             <Typography variant="h4" fontWeight={600} gutterBottom>
               Draft CSV Visualizer
             </Typography>
@@ -1035,7 +1135,7 @@ export default function App() {
             </Box>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             <Divider sx={{ my: 2 }} />
-            {/* Multi-select Tournament Title filter and My Player filters */}
+            {/* Multi-select Tournament Title filter and My Players filters */}
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
               <Autocomplete
                 multiple
@@ -1047,7 +1147,7 @@ export default function App() {
                 )}
                 sx={{ minWidth: 230, maxWidth: 320 }}
               />
-              {sidebarPage === "my-player" && (
+              {sidebarPage === "my-players" && (
                 <>
                   <Autocomplete
                     options={["", ...teamOptions]}
@@ -1077,407 +1177,374 @@ export default function App() {
                 </>
               )}
             </Box>
-          </Paper>
-          {/* --- "My Player" Page --- */}
-          {sidebarPage === "my-player" && (
-            <Paper sx={{ p: 4, borderRadius: 3 }}>
-              {/* --- Section: Positional % by Round --- */}
-              <div ref={sectionRefs["positional-percent-by-round"]}>
+
+            {/* --- "My Players" Page --- */}
+            {sidebarPage === "my-players" && (
+              <>
+                {/* No charts here, just the player table */}
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  Positional % by Round
+                  My Players Table
                 </Typography>
-                {chartLinePositional.data.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={320}>
-                    <LineChart data={chartLinePositional.data}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="round" />
-                      <YAxis />
-                      <Tooltip />
-                      {chartLinePositional.positions.map(pos => (
-                        <Line
-                          key={pos}
-                          type="monotone"
-                          dataKey={pos}
-                          stroke={POSITION_COLORS[pos] || "#888"}
-                          dot={{ r: 4 }}
-                          strokeWidth={2}
-                        />
-                      ))}
-                      <Legend />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Typography>No data</Typography>
-                )}
-              </div>
-              <Divider sx={{ my: 4 }} />
-              {/* --- Section: Unique Players Drafted by Team --- */}
-              <div ref={sectionRefs["unique-players-by-team"]}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Unique Players Drafted by Team
-                </Typography>
-                {uniquePlayersByTeam.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={320}>
-                    <BarChart data={uniquePlayersByTeam}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="team" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="uniquePlayers">
-                        {uniquePlayersByTeam.map(entry => (
-                          <Cell key={entry.team} fill={TEAM_COLORS[entry.team] || "#8884d8"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Typography>No data</Typography>
-                )}
-              </div>
-              <Divider sx={{ my: 4 }} />
-              {/* --- Section: Team/Position Breakdown --- */}
-              <div ref={sectionRefs["team-position-breakdown"]}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Team/Position Breakdown
-                </Typography>
-                {chartTeamPositionBreakdown.chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={320}>
-                    <BarChart data={chartTeamPositionBreakdown.chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="team" />
-                      <YAxis />
-                      <Tooltip />
-                      {chartTeamPositionBreakdown.positions.map(pos => (
-                        <Bar dataKey={pos} stackId="a" fill={POSITION_COLORS[pos]} key={pos} />
-                      ))}
-                      <Legend />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Typography>No data</Typography>
-                )}
-              </div>
-              <Divider sx={{ my: 4 }} />
-              {/* --- Player Table --- */}
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                My Player Table
-              </Typography>
-              <Box sx={{ overflowX: "auto" }}>
-                <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2, minWidth: 900 }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ width: 40, p: 0 }} />
-                        {columns.map(col => (
-                          <TableCell
-                            key={col.id}
-                            sx={{
-                              minWidth: col.minWidth,
-                              maxWidth: col.maxWidth,
-                              width: col.width,
-                              fontWeight: 700,
-                              bgcolor: "#fafbfc",
-                              whiteSpace: "nowrap",
-                              px: 1.5,
-                            }}
-                            sortDirection={sortColumn === col.id ? sortDirection : false}
-                          >
-                            <TableSortLabel
-                              active={sortColumn === col.id}
-                              direction={sortColumn === col.id ? sortDirection : "asc"}
-                              onClick={handleSort(col.id)}
+                <Box sx={{ overflowX: "auto" }}>
+                  <TableContainer>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ width: 40, p: 0 }} />
+                          {columns.map(col => (
+                            <TableCell
+                              key={col.id}
+                              sx={{
+                                minWidth: col.minWidth,
+                                maxWidth: col.maxWidth,
+                                width: col.width,
+                                fontWeight: 700,
+                                bgcolor: "#fafbfc",
+                                whiteSpace: "nowrap",
+                                px: 1.5,
+                              }}
+                              sortDirection={sortColumn === col.id ? sortDirection : false}
                             >
-                              {col.label}
-                            </TableSortLabel>
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {pagedPlayers.map(player => {
-                        const myAdp = player.pickNumbers.length
-                          ? (player.pickNumbers.reduce((x, y) => x + y, 0) / player.pickNumbers.length).toFixed(2)
-                          : "-";
-                        const udKey = player.name ? player.name.trim() : "";
-                        const udAdp = udAdpLookup.get(udKey) ?? "-";
-                        const myAdpNum = Number(myAdp);
-                        const udAdpNum = Number(udAdp);
-                        const clv = (!isNaN(myAdpNum) && !isNaN(udAdpNum))
-                          ? (myAdpNum - udAdpNum).toFixed(2)
-                          : "-";
-                        const clvPct = (!isNaN(myAdpNum) && !isNaN(udAdpNum) && udAdpNum !== 0)
-                          ? (((myAdpNum - udAdpNum) / udAdpNum) * 100).toFixed(1)
-                          : "-";
-                        const playerDrafts = new Set(player.rows.map(row => row["Draft"])).size;
-                        const exposure = totalDrafts > 0
-                          ? ((playerDrafts / totalDrafts) * 100).toFixed(1)
-                          : "-";
-                        const count = player.rows.length;
-                        const key = `${player.name}|${player.team}|${player.position}`;
-                        return (
-                          <PlayerRow
-                            key={key}
-                            player={player}
-                            myAdp={myAdp}
-                            udAdp={udAdp}
-                            clv={clv}
-                            clvPct={clvPct}
-                            exposure={exposure}
-                            count={count}
-                            isOpen={expandedPlayer === key}
-                            onClick={handleRowClick(key)}
-                            TEAM_COLORS={TEAM_COLORS}
-                            allPlayers={playerTableData}
+                              <TableSortLabel
+                                active={sortColumn === col.id}
+                                direction={sortColumn === col.id ? sortDirection : "asc"}
+                                onClick={handleSort(col.id)}
+                              >
+                                {col.label}
+                              </TableSortLabel>
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {pagedPlayers.map(player => {
+                          const myAdp = player.pickNumbers.length
+                            ? (player.pickNumbers.reduce((x, y) => x + y, 0) / player.pickNumbers.length).toFixed(2)
+                            : "-";
+                          const udKey = player.name ? player.name.trim() : "";
+                          const udAdp = udAdpLookup.get(udKey) ?? "-";
+                          const myAdpNum = Number(myAdp);
+                          const udAdpNum = Number(udAdp);
+                          const clv = (!isNaN(myAdpNum) && !isNaN(udAdpNum))
+                            ? (myAdpNum - udAdpNum).toFixed(2)
+                            : "-";
+                          const clvPct = (!isNaN(myAdpNum) && !isNaN(udAdpNum) && udAdpNum !== 0)
+                            ? (((myAdpNum - udAdpNum) / udAdpNum) * 100).toFixed(1)
+                            : "-";
+                          const playerDrafts = new Set(player.rows.map(row => row["Draft"])).size;
+                          const exposure = totalDrafts > 0
+                            ? ((playerDrafts / totalDrafts) * 100).toFixed(1)
+                            : "-";
+                          const count = player.rows.length;
+                          const key = `${player.name}|${player.team}|${player.position}`;
+                          return (
+                            <PlayerRow
+                              key={key}
+                              player={player}
+                              myAdp={myAdp}
+                              udAdp={udAdp}
+                              clv={clv}
+                              clvPct={clvPct}
+                              exposure={exposure}
+                              count={count}
+                              isOpen={expandedPlayer === key}
+                              onClick={handleRowClick(key)}
+                              TEAM_COLORS={TEAM_COLORS}
+                              POSITION_COLORS={POSITION_COLORS}
+                              allPlayers={playerTableData}
+                            />
+                          );
+                        })}
+                        {pagedPlayers.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={columns.length + 1} align="center">
+                              No players found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                    <Pagination
+                      count={pageCount}
+                      page={page}
+                      onChange={handlePageChange}
+                      color="primary"
+                      siblingCount={1}
+                      boundaryCount={1}
+                      showFirstButton
+                      showLastButton
+                    />
+                  </Box>
+                </Box>
+              </>
+            )}
+
+            {/* --- "My Teams" Page --- */}
+            {sidebarPage === "my-teams" && (
+              <>
+                <Typography variant="h5" sx={{ mt: 3 }}>
+                  My Teams
+                </Typography>
+                <Typography sx={{ mt: 2, color: "#888" }}>
+                  (This page is under construction.)
+                </Typography>
+              </>
+            )}
+
+            {/* --- "My Combos" Page --- */}
+            {sidebarPage === "my-combos" && (
+              <>
+                {/* --- My Draft Teams --- */}
+                <div ref={sectionRefs["my-draft-teams"]}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    My Draft Teams: Filter by Player Combos
+                  </Typography>
+                  <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                    <Autocomplete
+                      multiple
+                      id="combo-player-autocomplete"
+                      options={adpPlayerOptions}
+                      disableCloseOnSelect
+                      filterSelectedOptions
+                      value={comboPlayerInputs}
+                      onChange={handleComboPlayersChange}
+                      getOptionLabel={option => option.label}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          size="small"
+                          label="Filter: Add Players"
+                          placeholder="Enter player name(s)"
+                          sx={{ minWidth: 280, maxWidth: 420 }}
+                        />
+                      )}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            key={option.value}
+                            label={option.label}
+                            {...getTagProps({ index })}
                           />
-                        );
-                      })}
-                      {pagedPlayers.length === 0 && (
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.value === value.value}
+                    />
+                    <Typography variant="body2" sx={{ color: "text.secondary", ml: 2 }}>
+                      Showing {filteredTeams.length} of {allTeams.length} teams
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+                  <TableContainer>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={columns.length + 1} align="center">
-                            No players found.
-                          </TableCell>
+                          <TableCell sx={{ width: 90, maxWidth: 90, minWidth: 60, whiteSpace: 'nowrap', fontWeight: 700 }}>Draft Date</TableCell>
+                          <TableCell sx={{ width: 60, maxWidth: 60, minWidth: 40, whiteSpace: 'nowrap', fontWeight: 700 }}>Draft Slot</TableCell>
+                          <TableCell sx={{ width: 120, maxWidth: 120, minWidth: 80, whiteSpace: 'nowrap', fontWeight: 700 }}>Tournament</TableCell>
+                          <TableCell sx={{ width: "60%", fontWeight: 700 }}>Roster</TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                  <Pagination
-                    count={pageCount}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    siblingCount={1}
-                    boundaryCount={1}
-                    showFirstButton
-                    showLastButton
-                  />
-                </Box>
-              </Box>
-            </Paper>
-          )}
-
-          {/* --- "My Teams" Page --- */}
-          {sidebarPage === "my-teams" && (
-            <Paper sx={{ p: 4, borderRadius: 3 }}>
-              <Typography variant="h5" sx={{ mt: 3 }}>
-                My Teams
-              </Typography>
-              <Typography sx={{ mt: 2, color: "#888" }}>
-                (This page is under construction.)
-              </Typography>
-            </Paper>
-          )}
-
-          {/* --- "My Combos" Page --- */}
-          {sidebarPage === "my-combos" && (
-            <Paper sx={{ p: 4, borderRadius: 3 }}>
-              {/* --- My Draft Teams --- */}
-              <div ref={sectionRefs["my-draft-teams"]}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  My Draft Teams: Filter by Player Combos
-                </Typography>
-                <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                  <Autocomplete
-                    multiple
-                    id="combo-player-autocomplete"
-                    options={adpPlayerOptions}
-                    disableCloseOnSelect
-                    filterSelectedOptions
-                    value={comboPlayerInputs}
-                    onChange={handleComboPlayersChange}
-                    getOptionLabel={option => option.label}
-                    renderInput={params => (
-                      <TextField
-                        {...params}
-                        variant="outlined"
-                        size="small"
-                        label="Filter: Add Players"
-                        placeholder="Enter player name(s)"
-                        sx={{ minWidth: 280, maxWidth: 420 }}
-                      />
-                    )}
-                    renderTags={(value, getTagProps) =>
-                      value.map((option, index) => (
-                        <Chip
-                          key={option.value}
-                          label={option.label}
-                          {...getTagProps({ index })}
-                        />
-                      ))
-                    }
-                    isOptionEqualToValue={(option, value) => option.value === value.value}
-                  />
-                  <Typography variant="body2" sx={{ color: "text.secondary", ml: 2 }}>
-                    Showing {filteredTeams.length} of {allTeams.length} teams
-                  </Typography>
-                </Box>
-                <Divider sx={{ mb: 2 }} />
-                <TableContainer>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ width: 90, maxWidth: 90, minWidth: 60, whiteSpace: 'nowrap', fontWeight: 700 }}>Draft Date</TableCell>
-                        <TableCell sx={{ width: 60, maxWidth: 60, minWidth: 40, whiteSpace: 'nowrap', fontWeight: 700 }}>Draft Slot</TableCell>
-                        <TableCell sx={{ width: 120, maxWidth: 120, minWidth: 80, whiteSpace: 'nowrap', fontWeight: 700 }}>Tournament</TableCell>
-                        <TableCell sx={{ width: "60%", fontWeight: 700 }}>Roster</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {pagedTeams.map(team => (
-                        <TableRow key={team.draftId}>
-                          <TableCell sx={{ width: 90, maxWidth: 90, minWidth: 60, whiteSpace: 'nowrap' }}>{team.date}</TableCell>
-                          <TableCell sx={{ width: 60, maxWidth: 60, minWidth: 40, whiteSpace: 'nowrap' }}>{team.draftSlot || ""}</TableCell>
-                          <TableCell sx={{ width: 120, maxWidth: 120, minWidth: 80, whiteSpace: 'nowrap' }}>{team.tournament}</TableCell>
-                          <TableCell sx={{ p: 0 }}>
-                            <Box sx={{
-                              display: "flex",
-                              width: "100%",
-                              gap: 2,
-                              alignItems: "stretch",
-                              justifyContent: "stretch",
-                            }}>
-                              {team.orderedPositions.map(pos => (
-                                <Box
-                                  key={pos}
-                                  sx={{
-                                    flex: 1,
-                                    minWidth: 0,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "flex-start",
-                                    bgcolor: "#fafbfc",
-                                    borderRadius: 1,
-                                    p: 1,
-                                    mb: 1,
-                                    border: "1px solid #eee",
-                                    maxWidth: "100%",
-                                    boxSizing: "border-box",
-                                  }}
-                                >
-                                  <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {pos}
-                                  </Typography>
-                                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
-                                    {team.playersByPosition[pos].map((p, idx) => (
-                                      <Chip
-                                        key={p.name + p.position + p.pickNumber}
-                                        label={`${p.name} [${p.pickNumber}]`}
-                                        size="small"
-                                        sx={{
-                                          bgcolor: TEAM_COLORS[p.team] || "#eee",
-                                          color: "#fff",
-                                          fontWeight: 500,
-                                          mb: 0.5,
-                                          width: "100%",
-                                          minWidth: 0,
-                                        }}
-                                      />
-                                    ))}
+                      </TableHead>
+                      <TableBody>
+                        {pagedTeams.map(team => (
+                          <TableRow key={team.draftId}>
+                            <TableCell sx={{ width: 90, maxWidth: 90, minWidth: 60, whiteSpace: 'nowrap' }}>{team.date}</TableCell>
+                            <TableCell sx={{ width: 60, maxWidth: 60, minWidth: 40, whiteSpace: 'nowrap' }}>{team.draftSlot || ""}</TableCell>
+                            <TableCell sx={{ width: 120, maxWidth: 120, minWidth: 80, whiteSpace: 'nowrap' }}>{team.tournament}</TableCell>
+                            <TableCell sx={{ p: 0 }}>
+                              <Box sx={{
+                                display: "flex",
+                                width: "100%",
+                                gap: 2,
+                                alignItems: "stretch",
+                                justifyContent: "stretch",
+                              }}>
+                                {team.orderedPositions.map(pos => (
+                                  <Box
+                                    key={pos}
+                                    sx={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "flex-start",
+                                      bgcolor: "#fafbfc",
+                                      borderRadius: 1,
+                                      p: 1,
+                                      mb: 1,
+                                      border: "1px solid #eee",
+                                      maxWidth: "100%",
+                                      boxSizing: "border-box",
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                      {pos}
+                                    </Typography>
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
+                                      {team.playersByPosition[pos].map((p, idx) => (
+                                        <Chip
+                                          key={p.name + p.position + p.pickNumber}
+                                          label={`${p.name} [${p.pickNumber}]`}
+                                          size="small"
+                                          sx={{
+                                            bgcolor: TEAM_COLORS[p.team] || "#eee",
+                                            color: "#fff",
+                                            fontWeight: 500,
+                                            mb: 0.5,
+                                            width: "100%",
+                                            minWidth: 0,
+                                          }}
+                                        />
+                                      ))}
+                                    </Box>
                                   </Box>
-                                </Box>
-                              ))}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {pagedTeams.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} align="center">
-                            No teams found with all selected players.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                  <Pagination
-                    count={comboPageCount}
-                    page={comboPage}
-                    onChange={handleComboPageChange}
-                    color="primary"
-                    siblingCount={1}
-                    boundaryCount={1}
-                    showFirstButton
-                    showLastButton
-                  />
-                </Box>
-              </div>
-              <Divider sx={{ my: 4 }} />
-              {/* Portfolio Recommendations */}
-              <div ref={sectionRefs["portfolio-recommendations"]}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 2 }}>
-                  <Typography variant="h6" fontWeight={600}>
-                    Portfolio Recommendation: 2-Player Combos Over
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={() => {
-                      const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
-                      if (currentIndex > 0) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex - 1]);
-                    }}
-                    disabled={exposureThreshold === ALLOWED_EXPOSURE_VALUES[0]}
-                  >
-                    -
-                  </Button>
-                  <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55, textAlign: "center" }}>
-                    {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={() => {
-                      const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
-                      if (currentIndex < ALLOWED_EXPOSURE_VALUES.length - 1) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex + 1]);
-                    }}
-                    disabled={exposureThreshold >= ALLOWED_EXPOSURE_VALUES[ALLOWED_EXPOSURE_VALUES.length - 1]}
-                  >
-                    +
-                  </Button>
-                </Box>
-                <PortfolioPairsTable pairs={portfolioPairs} TEAM_COLORS={TEAM_COLORS} />
-              </div>
-            </Paper>
-          )}
+                                ))}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {pagedTeams.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center">
+                              No teams found with all selected players.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                    <Pagination
+                      count={comboPageCount}
+                      page={comboPage}
+                      onChange={handleComboPageChange}
+                      color="primary"
+                      siblingCount={1}
+                      boundaryCount={1}
+                      showFirstButton
+                      showLastButton
+                    />
+                  </Box>
+                </div>
+                <Divider sx={{ my: 4 }} />
+                {/* Portfolio Recommendations */}
+                <div ref={sectionRefs["portfolio-recommendations"]}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, my: 2 }}>
+                    <Typography variant="h6" fontWeight={600}>
+                      Portfolio Recommendation: 2-Player Combos Over
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={() => {
+                        const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
+                        if (currentIndex > 0) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex - 1]);
+                      }}
+                      disabled={exposureThreshold === ALLOWED_EXPOSURE_VALUES[0]}
+                    >
+                      -
+                    </Button>
+                    <Typography variant="h6" fontWeight={600} sx={{ minWidth: 55, textAlign: "center" }}>
+                      {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={() => {
+                        const currentIndex = ALLOWED_EXPOSURE_VALUES.indexOf(exposureThreshold);
+                        if (currentIndex < ALLOWED_EXPOSURE_VALUES.length - 1) setExposureThreshold(ALLOWED_EXPOSURE_VALUES[currentIndex + 1]);
+                      }}
+                      disabled={exposureThreshold >= ALLOWED_EXPOSURE_VALUES[ALLOWED_EXPOSURE_VALUES.length - 1]}
+                    >
+                      +
+                    </Button>
+                  </Box>
+                  <PortfolioPairsTable pairs={portfolioPairs} TEAM_COLORS={TEAM_COLORS} />
+                </div>
+              </>
+            )}
 
-          {/* --- "Charts" Page --- */}
-          {sidebarPage === "charts" && (
-            <Paper sx={{ p: 4, borderRadius: 3 }}>
-              <div ref={sectionRefs["charts-positional-percent"]}>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  Positional % by Round
-                </Typography>
-                {chartLinePositional.data.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={chartLinePositional.data}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="round" />
-                      <YAxis />
-                      <Tooltip />
-                      {chartLinePositional.positions.map(pos => (
-                        <Line
-                          key={pos}
-                          type="monotone"
-                          dataKey={pos}
-                          stroke={POSITION_COLORS[pos] || "#888"}
-                          dot={{ r: 4 }}
-                          strokeWidth={2}
-                        />
-                      ))}
-                      <Legend />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Typography>No data</Typography>
-                )}
-              </div>
-            </Paper>
-          )}
+            {/* --- "Charts" Page --- */}
+            {sidebarPage === "charts" && (
+              <>
+                <div ref={sectionRefs["charts-positional-percent"]} style={{ marginBottom: 32 }}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    Positional % by Round
+                  </Typography>
+                  {chartLinePositional.data.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={400}>
+                      <LineChart data={chartLinePositional.data}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="round" />
+                        <YAxis />
+                        <Tooltip />
+                        {chartLinePositional.positions.map(pos => (
+                          <Line
+                            key={pos}
+                            type="monotone"
+                            dataKey={pos}
+                            stroke={POSITION_COLORS[pos] || "#888"}
+                            dot={{ r: 4 }}
+                            strokeWidth={2}
+                          />
+                        ))}
+                        <Legend />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography>No data</Typography>
+                  )}
+                </div>
+                <div ref={sectionRefs["charts-unique-players-by-team"]} style={{ marginBottom: 32 }}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    Unique Players Drafted by Team
+                  </Typography>
+                  {uniquePlayersByTeam.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={uniquePlayersByTeam}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="team" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="uniquePlayers">
+                          {uniquePlayersByTeam.map(entry => (
+                            <Cell key={entry.team} fill={TEAM_COLORS[entry.team] || "#8884d8"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography>No data</Typography>
+                  )}
+                </div>
+                <div ref={sectionRefs["charts-team-position-breakdown"]}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    Team/Position Breakdown
+                  </Typography>
+                  {chartTeamPositionBreakdown.chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={chartTeamPositionBreakdown.chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="team" />
+                        <YAxis />
+                        <Tooltip />
+                        {chartTeamPositionBreakdown.positions.map(pos => (
+                          <Bar dataKey={pos} stackId="a" fill={POSITION_COLORS[pos]} key={pos} />
+                        ))}
+                        <Legend />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography>No data</Typography>
+                  )}
+                </div>
+              </>
+            )}
 
-          {/* --- CSV Format Info --- */}
-          <Paper elevation={1} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, mt: 4 }}>
+            {/* --- CSV Format Info --- */}
+            <Divider sx={{ my: 4 }} />
             <Typography variant="h6" fontWeight={600}>CSV Format</Typography>
             <Typography variant="body2" sx={{ mb: 2 }}>
               Your CSV file must have the following columns:<br />
