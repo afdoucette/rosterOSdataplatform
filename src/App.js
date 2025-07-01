@@ -14,10 +14,6 @@ import {
   Paper,
   Alert,
   Input,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
   Pagination,
   TextField,
   TableSortLabel,
@@ -26,15 +22,10 @@ import {
   Chip,
   Drawer,
   List as MUIList,
-  ListItem as MUIListItem,
+  ListItemText,
   ListItemButton,
   Toolbar,
-  Tabs,
-  Tab,
-  Collapse
 } from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   BarChart,
   Bar,
@@ -429,6 +420,12 @@ function getTeamsTableFromCsv(data) {
   return Object.values(teams).sort((a, b) => b.date.localeCompare(a.date));
 }
 
+function scrollToRef(ref) {
+  if (ref && ref.current) {
+    ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 // ---------- PortfolioPairsTable COMPONENT ----------
 function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
   const [filter, setFilter] = useState("");
@@ -577,28 +574,86 @@ function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
 }
 
 // ---------- PlayerRow COMPONENT ----------
-// ... unchanged from your file ...
-
-// --- Helper for anchor scrolling ---
-function scrollToRef(ref) {
-  if (ref && ref.current) {
-    ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+function PlayerRow({
+  player,
+  myAdp,
+  udAdp,
+  clv,
+  clvPct,
+  exposure,
+  count,
+  isOpen,
+  onClick,
+  TEAM_COLORS,
+  allPlayers
+}) {
+  return (
+    <>
+      <TableRow hover sx={{ cursor: "pointer" }} onClick={onClick}>
+        <TableCell sx={{ width: 40, p: 0 }}>
+          <span style={{ fontWeight: 700 }}>{isOpen ? "▼" : "▶"}</span>
+        </TableCell>
+        <TableCell>{player.name}</TableCell>
+        <TableCell>
+          <Chip
+            label={player.team}
+            size="small"
+            sx={{
+              bgcolor: TEAM_COLORS[player.team] || "#eee",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "0.95em"
+            }}
+          />
+        </TableCell>
+        <TableCell>{player.position}</TableCell>
+        <TableCell>{exposure}</TableCell>
+        <TableCell>{count}</TableCell>
+        <TableCell>{myAdp}</TableCell>
+        <TableCell>{udAdp}</TableCell>
+        <TableCell>{clv}</TableCell>
+        <TableCell>{clvPct}</TableCell>
+      </TableRow>
+      {isOpen && (
+        <TableRow>
+          <TableCell colSpan={columns.length + 1} sx={{ bgcolor: "#fafbfc", p: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Drafted in these months:</Typography>
+            <Box sx={{ mb: 1 }}>
+              {Object.entries(player.accordionStats.monthCounts).map(([month, count]) => (
+                <Chip key={month} label={`${month}: ${count}`} sx={{ mr: 1, mb: 1 }} />
+              ))}
+            </Box>
+            <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>Tournament Exposure:</Typography>
+            <Box sx={{ mb: 1 }}>
+              {Object.entries(player.accordionStats.tournamentCounts).map(([tourney, count]) => (
+                <Chip key={tourney} label={`${tourney}: ${count}`} sx={{ mr: 1, mb: 1 }} />
+              ))}
+            </Box>
+            <Typography variant="subtitle2" sx={{ mt: 1 }}>
+              Total Tournament Entry Fee: ${player.accordionStats.totalTournamentEntryFee.toFixed(2)}
+            </Typography>
+            <Typography variant="subtitle2" sx={{ mt: 2 }}>Top Combos:</Typography>
+            <ul>
+              {getPlayerCombos(player, allPlayers).map((combo, idx) => (
+                <li key={idx}>
+                  {combo.players.map(
+                    p => `${p.name} (${p.team} ${p.position})`
+                  ).join(", ")} [{combo.count} teams]
+                </li>
+              ))}
+            </ul>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
 }
+
 
 // --- MAIN APP ---
 export default function App() {
-  // ...Your existing state...
-  // --- New state for sidebar and filters ---
-  // ... see previous Copilot response for all state and filtering logic ...
-  
-  // [Insert: All code from previous Copilot response, with full implementation of the sidebar, filters, anchor links, etc.]
-  // [The code is too long for a single message; please request a specific section if you'd like to see it!]
-}
-  // ---------- MAIN APP ----------
-  // ...continuing from previous code...
-
-  // All state and logic as previously, now with sidebar refs for anchors:
+  // All state and logic as discussed in previous messages:
+  // State
   const [rawData, setRawData] = useState([]);
   const [players, setPlayers] = useState([]);
   const [summaryStats, setSummaryStats] = useState(null);
@@ -621,10 +676,9 @@ export default function App() {
   const comboRowsPerPage = 15;
   const [exposureThreshold, setExposureThreshold] = useState(16);
 
-  // New: Sidebar/page navigation
+  // Sidebar/page navigation
   const [sidebarPage, setSidebarPage] = useState("my-player");
-
-  // New: Multi-select Tournament filter, Team and Position filters
+  // Multi-select Tournament filter, Team and Position filters
   const [tournamentFilter, setTournamentFilter] = useState([]);
   const [teamFilter, setTeamFilter] = useState("");
   const [positionFilter, setPositionFilter] = useState("");
@@ -724,7 +778,7 @@ export default function App() {
 
   // CSV/ADP loading, and all other logic from your original App.js is unchanged except to use filteredRawData where appropriate.
 
-  // ...continue with render logic in next chunk...  // CSV file handling
+  // CSV file handling
   useEffect(() => {
     setAdpLoading(true);
     fetch(process.env.PUBLIC_URL + "/ud_adp.json")
