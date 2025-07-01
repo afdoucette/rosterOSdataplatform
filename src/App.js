@@ -1491,29 +1491,45 @@ export default function App() {
             <Divider sx={{ my: 4 }} />
             {/* Portfolio Recommendation Section: TABLE */}
             <Box>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-  Portfolio Recommendation: 2-Player Combos Over&nbsp;
-  <Box sx={{ width: 250, display: "inline-block", mx: 2, verticalAlign: "middle" }}>
-    <Slider
-      value={exposureThreshold >= 50 ? 52 : exposureThreshold}
-      onChange={(e, val) => setExposureThreshold(val === 52 ? 50 : val)}
-      step={2}
-      min={10}
-      max={52}
-      marks={[
-        ...Array.from({ length: 21 }, (_, i) => {
-          const val = 10 + i * 2;
-          if (val <= 50) return { value: val, label: `${val}%` };
-          return null;
-        }).filter(Boolean),
-        { value: 52, label: "50%+" }
-      ]}
-      valueLabelDisplay="auto"
-      getAriaValueText={v => (v === 52 ? "50%+" : `${v}%`)}
-    />
-  </Box>
-  {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
-</Typography>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                Portfolio Recommendation: 2-Player Combos
+              </Typography>
+              <Box sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 2, 
+                mb: 2,
+                width: "100%"
+              }}>
+                <Typography variant="body1" sx={{ fontWeight: 500, minWidth: "fit-content" }}>
+                  Over
+                </Typography>
+                <Slider
+                  value={exposureThreshold >= 50 ? 52 : exposureThreshold}
+                  onChange={(e, val) => setExposureThreshold(val === 52 ? 50 : val)}
+                  step={2}
+                  min={10}
+                  max={52}
+                  marks={[
+                    ...Array.from({ length: 21 }, (_, i) => {
+                      const val = 10 + i * 2;
+                      if (val <= 50) return { value: val, label: `${val}%` };
+                      return null;
+                    }).filter(Boolean),
+                    { value: 52, label: "50%+" }
+                  ]}
+                  valueLabelDisplay="auto"
+                  getAriaValueText={v => (v === 52 ? "50%+" : `${v}%`)}
+                  sx={{ flexGrow: 1 }}
+                />
+                <Typography variant="body1" sx={{ 
+                  fontWeight: 600, 
+                  minWidth: "fit-content",
+                  textAlign: "right"
+                }}>
+                  {exposureThreshold >= 50 ? "50%+" : `${exposureThreshold}%`}
+                </Typography>
+              </Box>
               <PortfolioPairsTable pairs={portfolioPairs} TEAM_COLORS={TEAM_COLORS} />
             </Box>
           </Paper>
