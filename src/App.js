@@ -1012,9 +1012,11 @@ const handleSort = (columnId) => () => {
   if (sortColumn === columnId) {
     setSortDirection(sortDirection === "asc" ? "desc" : "asc");
   } else {
-    setSortColumn(columnId);
-    setSortDirection("asc");
-  }
+  setSortColumn(columnId);
+  setSortDirection("asc");
+  setPage(1);
+  setExpandedPlayer(false);
+}
   setPage(1);
 };
   const handleFilterName = (e) => {
