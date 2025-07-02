@@ -1,3 +1,5 @@
+// CHUNK 1 OF 2
+
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Papa from "papaparse";
 import {
@@ -38,8 +40,6 @@ import {
   Line,
   Legend,
   Cell,
-  Scatter,
-  ScatterChart,
 } from "recharts";
 
 // ---------- CONSTANTS & HELPERS ----------
@@ -79,6 +79,7 @@ const columns = [
   { id: "clvPct", label: "CLV %", numeric: true, width: 75 },
 ];
 const ALLOWED_EXPOSURE_VALUES = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+
 function validateHeaders(row) {
   const uploadedHeaders = Object.keys(row || {});
   return csvHeaders.filter(h => !uploadedHeaders.includes(h));
@@ -249,6 +250,7 @@ function getPlayerPickChartData(player) {
   return points.map(pt => ({
     pick: pt.pick,
     date: pt.date.getTime(),
+    dateObj: pt.date,
     dateStr: pt.date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
   }));
 }
@@ -421,34 +423,24 @@ function getTeamsTableFromCsv(data) {
   });
   return Object.values(teams).sort((a, b) => b.date.localeCompare(a.date));
 }
-
 function scrollToRef(ref) {
   if (ref && ref.current) {
     ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
+// CHUNK 2 OF 2
 
-// ---------- PortfolioPairsTable COMPONENT ----------
 function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
-  const [filter, setFilter] = useState("");
-  const [order, setOrder] = useState("desc");
-  const [orderBy, setOrderBy] = useState("exposure1");
+  const [filter, setFilter] = React.useState("");
+  const [order, setOrder] = React.useState("desc");
+  const [orderBy, setOrderBy] = React.useState("exposure1");
 
   const getComparator = (column, order) => (a, b) => {
     let aVal, bVal;
-    if (column === "p1") {
-      aVal = a.p1.name;
-      bVal = b.p1.name;
-    } else if (column === "p2") {
-      aVal = a.p2.name;
-      bVal = b.p2.name;
-    } else if (column === "exposure1") {
-      aVal = Number(a.exposure1);
-      bVal = Number(b.exposure1);
-    } else if (column === "exposure2") {
-      aVal = Number(a.exposure2);
-      bVal = Number(b.exposure2);
-    }
+    if (column === "p1") aVal = a.p1.name, bVal = b.p1.name;
+    else if (column === "p2") aVal = a.p2.name, bVal = b.p2.name;
+    else if (column === "exposure1") aVal = Number(a.exposure1), bVal = Number(b.exposure1);
+    else if (column === "exposure2") aVal = Number(a.exposure2), bVal = Number(b.exposure2);
     if (typeof aVal === "string") aVal = aVal.toLocaleLowerCase();
     if (typeof bVal === "string") bVal = bVal.toLocaleLowerCase();
     if (aVal < bVal) return order === "asc" ? -1 : 1;
@@ -456,116 +448,55 @@ function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
     return 0;
   };
 
-  const filtered = useMemo(() => {
-    if (!filter) return pairs;
-    return pairs.filter(
-      ({ p1, p2 }) =>
-        p1.name.toLowerCase().includes(filter.toLowerCase()) ||
-        p2.name.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [pairs, filter]);
+  const filtered = React.useMemo(() =>
+    filter
+      ? pairs.filter(({ p1, p2 }) =>
+          p1.name.toLowerCase().includes(filter.toLowerCase()) ||
+          p2.name.toLowerCase().includes(filter.toLowerCase()))
+      : pairs, [pairs, filter]);
 
-  const sorted = useMemo(() => {
-    if (!orderBy) return filtered;
-    return filtered.slice().sort(getComparator(orderBy, order));
-  }, [filtered, orderBy, order]);
+  const sorted = React.useMemo(() =>
+    !orderBy ? filtered : filtered.slice().sort(getComparator(orderBy, order)),
+    [filtered, orderBy, order]);
 
   const handleSort = (col) => {
-    if (orderBy === col) {
-      setOrder(order === "asc" ? "desc" : "asc");
-    } else {
-      setOrderBy(col);
-      setOrder("desc");
-    }
+    if (orderBy === col) setOrder(order === "asc" ? "desc" : "asc");
+    else { setOrderBy(col); setOrder("desc"); }
   };
 
   return (
     <Paper sx={{ mt: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", p: 2 }}>
-        <TextField
-          label="Filter by player"
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          size="small"
-          sx={{ width: 260 }}
-        />
+        <TextField label="Filter by player" value={filter} onChange={e => setFilter(e.target.value)} size="small" sx={{ width: 260 }} />
       </Box>
       <TableContainer component={Paper}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "p1"}
-                  direction={orderBy === "p1" ? order : "asc"}
-                  onClick={() => handleSort("p1")}
-                >
-                  Player 1
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "exposure1"}
-                  direction={orderBy === "exposure1" ? order : "desc"}
-                  onClick={() => handleSort("exposure1")}
-                >
-                  Exposure 1 (%)
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "p2"}
-                  direction={orderBy === "p2" ? order : "asc"}
-                  onClick={() => handleSort("p2")}
-                >
-                  Player 2
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={orderBy === "exposure2"}
-                  direction={orderBy === "exposure2" ? order : "desc"}
-                  onClick={() => handleSort("exposure2")}
-                >
-                  Exposure 2 (%)
-                </TableSortLabel>
-              </TableCell>
+              <TableCell><TableSortLabel active={orderBy === "p1"} direction={orderBy === "p1" ? order : "asc"} onClick={() => handleSort("p1")}>Player 1</TableSortLabel></TableCell>
+              <TableCell><TableSortLabel active={orderBy === "exposure1"} direction={orderBy === "exposure1" ? order : "desc"} onClick={() => handleSort("exposure1")}>Exposure 1 (%)</TableSortLabel></TableCell>
+              <TableCell><TableSortLabel active={orderBy === "p2"} direction={orderBy === "p2" ? order : "asc"} onClick={() => handleSort("p2")}>Player 2</TableSortLabel></TableCell>
+              <TableCell><TableSortLabel active={orderBy === "exposure2"} direction={orderBy === "exposure2" ? order : "desc"} onClick={() => handleSort("exposure2")}>Exposure 2 (%)</TableSortLabel></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {sorted.map(({ p1, p2, exposure1, exposure2 }, idx) => (
+            {sorted.map(({ p1, p2, exposure1, exposure2 }) => (
               <TableRow key={p1.name + p1.team + p1.position + "|" + p2.name + p2.team + p2.position}>
                 <TableCell>
-                  <Chip
-                    label={`${p1.name} (${p1.team} ${p1.position})`}
-                    size="small"
-                    sx={{
-                      bgcolor: TEAM_COLORS[p1.team] || "#eee",
-                      color: "#fff",
-                      fontWeight: 500,
-                    }}
-                  />
+                  <Chip label={`${p1.name} (${p1.team} ${p1.position})`} size="small"
+                    sx={{ bgcolor: TEAM_COLORS[p1.team] || "#eee", color: "#fff", fontWeight: 500 }} />
                 </TableCell>
                 <TableCell>{exposure1.toFixed(1)}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={`${p2.name} (${p2.team} ${p2.position})`}
-                    size="small"
-                    sx={{
-                      bgcolor: TEAM_COLORS[p2.team] || "#eee",
-                      color: "#fff",
-                      fontWeight: 500,
-                    }}
-                  />
+                  <Chip label={`${p2.name} (${p2.team} ${p2.position})`} size="small"
+                    sx={{ bgcolor: TEAM_COLORS[p2.team] || "#eee", color: "#fff", fontWeight: 500 }} />
                 </TableCell>
                 <TableCell>{exposure2.toFixed(1)}</TableCell>
               </TableRow>
             ))}
             {sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} align="center">
-                  No pairs found.
-                </TableCell>
+                <TableCell colSpan={4} align="center">No pairs found.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -575,7 +506,6 @@ function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
   );
 }
 
-// ---------- PlayerRow COMPONENT ----------
 function PlayerRow({
   player,
   myAdp,
@@ -590,10 +520,44 @@ function PlayerRow({
   POSITION_COLORS,
   allPlayers
 }) {
-  // For combo lists
+  // --- Combo helpers ---
   const top2Combos = getPlayerCombos(player, allPlayers, 2, 5);
   const top3Combos = getPlayerCombos(player, allPlayers, 3, 5);
-  const pickChartData = getPlayerPickChartData(player);
+
+  // --- Pick Number Over Time chart data, with fixed X/Y axis ---
+  const pickChartDataRaw = getPlayerPickChartData(player);
+  // Chart axis: always 4/20/25 to today
+  const xMin = new Date("2025-04-20T00:00:00Z").getTime();
+  const xMax = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+  // Y axis: always 216 to 1 (reversed)
+  let pickChartData = [...pickChartDataRaw];
+  if (pickChartData.length > 0) {
+    const startPick = pickChartData[0].pick;
+    const endPick = pickChartData[pickChartData.length - 1].pick;
+    if (pickChartData[0].date > xMin) {
+      pickChartData.unshift({
+        pick: startPick,
+        date: xMin,
+        dateObj: new Date(xMin),
+        dateStr: new Date(xMin).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+        _ghost: true
+      });
+    }
+    if (pickChartData[pickChartData.length - 1].date < xMax) {
+      pickChartData.push({
+        pick: endPick,
+        date: xMax,
+        dateObj: new Date(xMax),
+        dateStr: new Date(xMax).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+        _ghost: true
+      });
+    }
+  } else {
+    pickChartData = [
+      { pick: 108.5, date: xMin, dateObj: new Date(xMin), dateStr: new Date(xMin).toLocaleDateString(), _ghost: true },
+      { pick: 108.5, date: xMax, dateObj: new Date(xMax), dateStr: new Date(xMax).toLocaleDateString(), _ghost: true }
+    ];
+  }
 
   return (
     <>
@@ -603,26 +567,15 @@ function PlayerRow({
         </TableCell>
         <TableCell>{player.name}</TableCell>
         <TableCell>
-          {/* Team: colored dot and abbreviation */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <span
-              style={{
-                display: "inline-block",
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                background: TEAM_COLORS[player.team] || "#eee",
-                marginRight: 6,
-                border: "1px solid #ccc",
-              }}
-            />
-            <Typography variant="body2" fontWeight={700} sx={{ color: "#222" }}>
-              {player.team}
-            </Typography>
+            <span style={{
+              display: "inline-block", width: 12, height: 12, borderRadius: "50%",
+              background: TEAM_COLORS[player.team] || "#eee", marginRight: 6, border: "1px solid #ccc"
+            }} />
+            <Typography variant="body2" fontWeight={700} sx={{ color: "#222" }}>{player.team}</Typography>
           </Box>
         </TableCell>
         <TableCell>
-          {/* Position: colored chip */}
           <Chip
             label={player.position}
             size="small"
@@ -644,44 +597,77 @@ function PlayerRow({
       </TableRow>
       {isOpen && (
         <TableRow>
-          <TableCell colSpan={columns.length + 1} sx={{ bgcolor: "#fafbfc", p: 3 }}>
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4, alignItems: "flex-start" }}>
+          <TableCell colSpan={10} sx={{ bgcolor: "#fafbfc", p: 3 }}>
+            <Box sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 4,
+              alignItems: "flex-start",
+              width: "100%"
+            }}>
               {/* Pick Number Over Time Chart */}
               <Box sx={{ flex: 1, minWidth: 260 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
                   Pick Number Over Time
                 </Typography>
-                {pickChartData.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">No pick data</Typography>
-                ) : (
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={pickChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="dateStr"
-                        minTickGap={24}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis
-                        domain={['dataMin', 'dataMax']}
-                        reversed
-                        label={{ value: "Pick #", angle: -90, position: "insideLeft", fontSize: 12 }}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="pick"
-                        stroke={POSITION_COLORS[player.position] || "#888"}
-                        dot={{ stroke: POSITION_COLORS[player.position] || "#888", fill: "#fff", r: 5, strokeWidth: 2 }}
-                        strokeWidth={3}
-                        activeDot={{ r: 7 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart
+                    data={pickChartData}
+                    margin={{ left: 8, right: 8, top: 8, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      type="number"
+                      domain={[xMin, xMax]}
+                      tickFormatter={tick => {
+                        const d = new Date(tick);
+                        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                      }}
+                      tick={{ fontSize: 12 }}
+                      minTickGap={24}
+                      scale="time"
+                    />
+                    <YAxis
+                      domain={[216, 1]}
+                      reversed
+                      label={{ value: "Pick #", angle: -90, position: "insideLeft", fontSize: 12 }}
+                      tick={{ fontSize: 12 }}
+                      allowDecimals={false}
+                      ticks={[1, 24, 48, 72, 96, 120, 144, 168, 192, 216]}
+                    />
+                    <Tooltip
+                      labelFormatter={label => {
+                        const d = new Date(label);
+                        return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+                      }}
+                      formatter={(value, name) => [`Pick #${value}`, "Pick"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pick"
+                      stroke={POSITION_COLORS[player.position] || "#888"}
+                      dot={(props) =>
+                        props.payload._ghost ? null : (
+                          <circle
+                            cx={props.cx}
+                            cy={props.cy}
+                            r={5}
+                            fill="#fff"
+                            stroke={POSITION_COLORS[player.position] || "#888"}
+                            strokeWidth={2}
+                          />
+                        )
+                      }
+                      strokeWidth={3}
+                      activeDot={{ r: 7 }}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </Box>
-              {/* Top 2-Player Combos */}
+              {/* 2-Player Combos */}
               <Box sx={{ flex: 1, minWidth: 220 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
                   Top 2-Player Combos
@@ -690,7 +676,7 @@ function PlayerRow({
                   <Typography variant="body2" color="text.secondary">No combos.</Typography>
                 ) : (
                   top2Combos.map((combo, idx) => (
-                    <Box key={idx} sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Box key={idx} sx={{ display: "flex", alignItems: "center", mb: 1, flexWrap: "wrap" }}>
                       {combo.players.map((p, i) => (
                         <Chip
                           key={p.name + p.team + p.position}
@@ -700,19 +686,19 @@ function PlayerRow({
                             bgcolor: TEAM_COLORS[p.team] || "#888",
                             color: "#fff",
                             fontWeight: 700,
-                            mr: i < combo.players.length - 1 ? 1 : 0,
+                            mr: 1,
                             mb: 0.5
                           }}
                         />
                       ))}
-                      <Typography variant="body2" sx={{ ml: 1 }}>
-                        Drafted together {combo.count} {combo.count === 1 ? "time" : "times"}
+                      <Typography variant="body2" sx={{ ml: 1, fontWeight: 700 }}>
+                        x{combo.count}
                       </Typography>
                     </Box>
                   ))
                 )}
               </Box>
-              {/* Top 3-Player Combos */}
+              {/* 3-Player Combos */}
               <Box sx={{ flex: 1, minWidth: 220 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
                   Top 3-Player Combos
@@ -731,13 +717,13 @@ function PlayerRow({
                             bgcolor: TEAM_COLORS[p.team] || "#888",
                             color: "#fff",
                             fontWeight: 700,
-                            mr: i < combo.players.length - 1 ? 1 : 0,
+                            mr: 1,
                             mb: 0.5
                           }}
                         />
                       ))}
-                      <Typography variant="body2" sx={{ ml: 1 }}>
-                        Drafted together {combo.count} {combo.count === 1 ? "time" : "times"}
+                      <Typography variant="body2" sx={{ ml: 1, fontWeight: 700 }}>
+                        x{combo.count}
                       </Typography>
                     </Box>
                   ))
@@ -750,10 +736,8 @@ function PlayerRow({
     </>
   );
 }
-
-
 // --- MAIN APP ---
-export default function App() {
+function App() {
   // All state and logic as discussed in previous messages:
   // State
   const [rawData, setRawData] = useState([]);
@@ -1556,3 +1540,5 @@ export default function App() {
     </Box>
   );
 }
+
+export default App;
