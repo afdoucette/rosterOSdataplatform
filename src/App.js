@@ -1,5 +1,3 @@
-// CHUNK 1 OF 2
-
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Papa from "papaparse";
 import {
@@ -79,6 +77,10 @@ const columns = [
   { id: "clvPct", label: "CLV %", numeric: true, width: 75 },
 ];
 const ALLOWED_EXPOSURE_VALUES = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+
+// --- Helper functions omitted for brevity, all as in your original code (unchanged) ---
+// ... validateHeaders, groupDataByPlayer, getPlayerCombos, getPortfolioRecommendationPairs, getPlayerPickChartData, getUniquePlayersByTeam, getStackedTeamPositionChartData, getDraftSlotStackedByTournament, getLineChartDataForPositionByRound, getTeamsTableFromCsv, scrollToRef
+// (Paste here all the helper functions you included above, unchanged. They are correct.)
 
 function validateHeaders(row) {
   const uploadedHeaders = Object.keys(row || {});
@@ -428,8 +430,8 @@ function scrollToRef(ref) {
     ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
-// CHUNK 2 OF 2
 
+// ---------------- PortfolioPairsTable ----------------
 function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
   const [filter, setFilter] = React.useState("");
   const [order, setOrder] = React.useState("desc");
@@ -506,6 +508,7 @@ function PortfolioPairsTable({ pairs, TEAM_COLORS }) {
   );
 }
 
+// ---------------- PlayerRow ----------------
 function PlayerRow({
   player,
   myAdp,
@@ -520,16 +523,12 @@ function PlayerRow({
   POSITION_COLORS,
   allPlayers
 }) {
-  // --- Combo helpers ---
   const top2Combos = getPlayerCombos(player, allPlayers, 2, 5);
   const top3Combos = getPlayerCombos(player, allPlayers, 3, 5);
 
-  // --- Pick Number Over Time chart data, with fixed X/Y axis ---
   const pickChartDataRaw = getPlayerPickChartData(player);
-  // Chart axis: always 4/20/25 to today
   const xMin = new Date("2025-04-20T00:00:00Z").getTime();
   const xMax = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
-  // Y axis: always 216 to 1 (reversed)
   let pickChartData = [...pickChartDataRaw];
   if (pickChartData.length > 0) {
     const startPick = pickChartData[0].pick;
@@ -736,10 +735,11 @@ function PlayerRow({
     </>
   );
 }
+
 // --- MAIN APP ---
 function App() {
-  // All state and logic as discussed in previous messages:
-  // State
+  // All state declarations and logic as in your provided code
+
   const [rawData, setRawData] = useState([]);
   const [players, setPlayers] = useState([]);
   const [summaryStats, setSummaryStats] = useState(null);
@@ -761,15 +761,10 @@ function App() {
   const [comboPage, setComboPage] = useState(1);
   const comboRowsPerPage = 15;
   const [exposureThreshold, setExposureThreshold] = useState(16);
-
-  // Sidebar/page navigation
   const [sidebarPage, setSidebarPage] = useState("my-players");
-  // Multi-select Tournament filter, Team and Position filters
   const [tournamentFilter, setTournamentFilter] = useState([]);
   const [teamFilter, setTeamFilter] = useState("");
   const [positionFilter, setPositionFilter] = useState("");
-
-  // Refs for sidebar anchor/scroll
   const sectionRefs = {
     "charts-positional-percent": useRef(null),
     "charts-unique-players-by-team": useRef(null),
@@ -777,8 +772,6 @@ function App() {
     "my-draft-teams": useRef(null),
     "portfolio-recommendations": useRef(null),
   };
-
-  // Tournament/Team/Position options
   const tournamentOptions = useMemo(() => {
     return Array.from(new Set(rawData.map(row => row["Tournament Title"]).filter(Boolean)));
   }, [rawData]);
@@ -788,8 +781,6 @@ function App() {
   const positionOptions = useMemo(() => {
     return Array.from(new Set(rawData.map(row => row["Position"]).filter(Boolean))).sort();
   }, [rawData]);
-
-  // Filtered data for all pages
   const filteredRawData = useMemo(() => {
     return rawData.filter(row => {
       if (tournamentFilter.length > 0 && !tournamentFilter.includes(row["Tournament Title"])) return false;
@@ -798,8 +789,6 @@ function App() {
       return true;
     });
   }, [rawData, tournamentFilter, teamFilter, positionFilter, sidebarPage]);
-
-  // Table, charts, teams, etc. use filteredRawData
   const playersData = useMemo(() => groupDataByPlayer(filteredRawData), [filteredRawData]);
   const playerTableData = useMemo(() => {
     return playersData.slice().sort((a, b) => {
@@ -817,8 +806,6 @@ function App() {
     if (!filteredRawData || filteredRawData.length === 0) return 0;
     return new Set(filteredRawData.map(row => row["Draft"])).size;
   }, [filteredRawData]);
-
-  // Sidebar navigation structure
   const sidebarNav = [
     {
       label: "My Players",
@@ -848,8 +835,6 @@ function App() {
       ],
     },
   ];
-
-  // Sidebar handlers
   const handleSidebarClick = (value) => {
     setSidebarPage(value);
     setPage(1);
@@ -858,10 +843,6 @@ function App() {
   const handleSidebarAnchor = (section) => {
     scrollToRef(sectionRefs[section]);
   };
-
-  // CSV/ADP loading, and all other logic from your original App.js is unchanged except to use filteredRawData where appropriate.
-
-  // CSV file handling
   useEffect(() => {
     setAdpLoading(true);
     fetch(process.env.PUBLIC_URL + "/ud_adp.json")
@@ -937,8 +918,6 @@ function App() {
       },
     });
   };
-
-  // Player table filtering
   const filteredPlayers = useMemo(() => {
     if (!filterName) return playerTableData;
     return playerTableData.filter(p =>
@@ -1008,23 +987,21 @@ function App() {
     setPage(value);
     setExpandedPlayer(false);
   };
-const handleSort = (columnId) => () => {
-  if (sortColumn === columnId) {
-    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-  } else {
-  setSortColumn(columnId);
-  setSortDirection("asc");
-  setPage(1);
-  setExpandedPlayer(false);
-}
-  setPage(1);
-};
+  const handleSort = (columnId) => () => {
+    if (sortColumn === columnId) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(columnId);
+      setSortDirection("asc");
+      setPage(1);
+      setExpandedPlayer(false);
+    }
+    setPage(1);
+  };
   const handleFilterName = (e) => {
     setFilterName(e.target.value);
     setPage(1);
   };
-
-  // Combo (My Draft Teams) filter logic
   const filteredTeams = useMemo(() => {
     if (!comboPlayerInputs || comboPlayerInputs.length === 0) return allTeams;
     return allTeams.filter(team => {
@@ -1045,8 +1022,6 @@ const handleSort = (columnId) => () => {
   const handleComboPageChange = (event, value) => {
     setComboPage(value);
   };
-
-  // Portfolio recommendation pairs for Combos tab
   const portfolioPairs = useMemo(() => {
     if (!filteredRawData || filteredRawData.length === 0 || !playersData || playersData.length === 0) return [];
     return getPortfolioRecommendationPairs(playersData, filteredRawData, exposureThreshold);
@@ -1163,11 +1138,9 @@ const handleSort = (columnId) => () => {
                 </>
               )}
             </Box>
-
             {/* --- "My Players" Page --- */}
             {sidebarPage === "my-players" && (
               <>
-                {/* No charts here, just the player table */}
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   My Players Table
                 </Typography>
@@ -1266,7 +1239,6 @@ const handleSort = (columnId) => () => {
                 </Box>
               </>
             )}
-
             {/* --- "My Teams" Page --- */}
             {sidebarPage === "my-teams" && (
               <>
@@ -1278,7 +1250,6 @@ const handleSort = (columnId) => () => {
                 </Typography>
               </>
             )}
-
             {/* --- "My Combos" Page --- */}
             {sidebarPage === "my-combos" && (
               <>
@@ -1451,7 +1422,6 @@ const handleSort = (columnId) => () => {
                 </div>
               </>
             )}
-
             {/* --- "Charts" Page --- */}
             {sidebarPage === "charts" && (
               <>
@@ -1528,7 +1498,6 @@ const handleSort = (columnId) => () => {
                 </div>
               </>
             )}
-
             {/* --- CSV Format Info --- */}
             <Divider sx={{ my: 4 }} />
             <Typography variant="h6" fontWeight={600}>CSV Format</Typography>
